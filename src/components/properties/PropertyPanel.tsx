@@ -4,12 +4,39 @@ import { addBody } from '../../state/actions/bodyActions'
 import { addJoint } from '../../state/actions/jointActions'
 import { addGeom } from '../../state/actions/geomActions'
 import { addSite } from '../../state/actions/siteActions'
+import { addActuator } from '../../state/actions/actuatorActions'
+import { addSensor } from '../../state/actions/sensorActions'
+import type { ActuatorKind, SensorKind } from '../../core/mjcf/types'
 import { BodyProperties } from './BodyProperties'
 import { JointProperties } from './JointProperties'
 import { GeomProperties } from './GeomProperties'
 import { SiteProperties } from './SiteProperties'
 import { ActuatorProperties } from './ActuatorProperties'
 import { SensorProperties } from './SensorProperties'
+import { AddWithKindPicker } from './fields/AddWithKindPicker'
+
+const ACTUATOR_KIND_OPTIONS: { value: ActuatorKind; label: string }[] = [
+  { value: 'motor', label: 'Motor' },
+  { value: 'position', label: 'Position' },
+  { value: 'velocity', label: 'Velocity' },
+  { value: 'general', label: 'General' },
+]
+
+const JOINT_SENSOR_KIND_OPTIONS: { value: SensorKind; label: string }[] = [
+  { value: 'jointpos', label: 'Joint position' },
+  { value: 'jointvel', label: 'Joint velocity' },
+  { value: 'jointactuatorfrc', label: 'Joint actuator force' },
+]
+
+const SITE_SENSOR_KIND_OPTIONS: { value: SensorKind; label: string }[] = [
+  { value: 'accelerometer', label: 'Accelerometer' },
+  { value: 'gyro', label: 'Gyro' },
+  { value: 'framepos', label: 'Frame position' },
+  { value: 'framequat', label: 'Frame orientation' },
+  { value: 'velocimeter', label: 'Velocimeter' },
+  { value: 'force', label: 'Force' },
+  { value: 'torque', label: 'Torque' },
+]
 
 function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -47,8 +74,8 @@ export function PropertyPanel() {
       {entity.kind === 'joint' && <JointProperties joint={entity.node} />}
       {entity.kind === 'geom' && <GeomProperties geom={entity.node} doc={document} />}
       {entity.kind === 'site' && <SiteProperties site={entity.node} />}
-      {entity.kind === 'actuator' && <ActuatorProperties actuator={entity.node} doc={document} />}
-      {entity.kind === 'sensor' && <SensorProperties sensor={entity.node} doc={document} />}
+      {entity.kind === 'actuator' && <ActuatorProperties actuator={entity.node} />}
+      {entity.kind === 'sensor' && <SensorProperties sensor={entity.node} />}
 
       {entity.kind === 'body' && (
         <div className="space-y-1 border-t border-neutral-800 pt-2">
@@ -91,6 +118,58 @@ export function PropertyPanel() {
               }
             />
           </div>
+        </div>
+      )}
+
+      {entity.kind === 'joint' && (
+        <div className="space-y-2 border-t border-neutral-800 pt-2">
+          <h4 className="text-xs font-semibold text-neutral-400">Add to this joint</h4>
+          {entity.node.name ? (
+            <>
+              <AddWithKindPicker
+                label="actuator"
+                options={ACTUATOR_KIND_OPTIONS}
+                onAdd={(kind) =>
+                  mutate((d) => {
+                    const id = addActuator(d, kind, entity.node.name)
+                    select({ kind: 'actuator', id })
+                  })
+                }
+              />
+              <AddWithKindPicker
+                label="sensor"
+                options={JOINT_SENSOR_KIND_OPTIONS}
+                onAdd={(kind) =>
+                  mutate((d) => {
+                    const id = addSensor(d, kind, entity.node.name)
+                    select({ kind: 'sensor', id })
+                  })
+                }
+              />
+            </>
+          ) : (
+            <p className="text-[11px] text-neutral-500">Name this joint to attach actuators/sensors to it.</p>
+          )}
+        </div>
+      )}
+
+      {entity.kind === 'site' && (
+        <div className="space-y-2 border-t border-neutral-800 pt-2">
+          <h4 className="text-xs font-semibold text-neutral-400">Add to this site</h4>
+          {entity.node.name ? (
+            <AddWithKindPicker
+              label="sensor"
+              options={SITE_SENSOR_KIND_OPTIONS}
+              onAdd={(kind) =>
+                mutate((d) => {
+                  const id = addSensor(d, kind, entity.node.name)
+                  select({ kind: 'sensor', id })
+                })
+              }
+            />
+          ) : (
+            <p className="text-[11px] text-neutral-500">Name this site to attach sensors to it.</p>
+          )}
         </div>
       )}
     </div>

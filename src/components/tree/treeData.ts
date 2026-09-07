@@ -1,5 +1,7 @@
 import type { ActuatorEntry, BodyNode, MjcfDocument, SensorEntry } from '../../core/mjcf/types'
 import type { Selection } from '../../state/store'
+import { findJoint, findSite } from '../../core/mjcf/queries'
+import { resolveSensorKindForTarget } from '../../state/actions/sensorActions'
 
 export interface TreeItem {
   id: string
@@ -122,4 +124,35 @@ export function buildTreeData(doc: MjcfDocument): TreeItem[] {
     })
   }
   return items
+}
+
+export type DropCompatibility = 'valid' | 'invalid' | 'irrelevant'
+
+/**
+ * Whether dragging `dragSelection` (an actuator/sensor tree row) onto
+ * `targetSelection` (the row being dropped on) should retarget it.
+ * 'irrelevant' means this pair isn't an actuator/sensor-onto-joint/site drag
+ * at all (e.g. dropping onto a body or geom) — callers treat that like
+ * 'invalid' for disableDrop purposes, but keep it distinct so the tree
+ * renderer doesn't paint unrelated rows with reject styling.
+ */
+export function checkActuatorSensorDrop(
+  doc: MjcfDocument,
+  dragSelection: Selection | undefined,
+  targetSelection: Selection | undefined,
+): DropCompatibility {
+  if (!dragSelection || (dragSelection.kind !== 'actuator' && dragSelection.kind !== 'sensor')) return 'irrelevant'
+  if (!targetSelection || (targetSelection.kind !== 'joint' && targetSelection.kind !== 'site')) return 'irrelevant'
+
+  const targetName =
+    targetSelection.kind === 'joint'
+      ? findJoint(doc.worldbody, targetSelection.id)?.name
+      : findSite(doc.worldbody, targetSelection.id)?.name
+  if (!targetName) return 'invalid'
+
+  if (dragSelection.kind === 'actuator') return 'valid'
+
+  const sensor = doc.sensors.find((s) => s.id === dragSelection.id)
+  if (!sensor) return 'invalid'
+  return resolveSensorKindForTarget(sensor.kind, targetSelection.kind) ? 'valid' : 'invalid'
 }

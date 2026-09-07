@@ -2,7 +2,10 @@ import { useMemo } from 'react'
 import { Tree } from 'react-arborist'
 import { useEditorStore } from '../../state/store'
 import { useElementSize } from '../../hooks/useElementSize'
-import { buildTreeData } from './treeData'
+import { findJoint, findSite } from '../../core/mjcf/queries'
+import { setActuatorTarget } from '../../state/actions/actuatorActions'
+import { moveSensorToTarget } from '../../state/actions/sensorActions'
+import { buildTreeData, checkActuatorSensorDrop } from './treeData'
 import { TreeNodeRenderer } from './TreeNodeRenderer'
 
 export function HierarchyTree() {
@@ -10,6 +13,7 @@ export function HierarchyTree() {
   const revision = useEditorStore((s) => s.revision)
   const selection = useEditorStore((s) => s.selection)
   const select = useEditorStore((s) => s.select)
+  const mutate = useEditorStore((s) => s.mutate)
   const [containerRef, size] = useElementSize<HTMLDivElement>()
 
   const data = useMemo(() => (document ? buildTreeData(document) : []), [document, revision])
@@ -28,6 +32,35 @@ export function HierarchyTree() {
           onSelect={(nodes) => {
             const first = nodes[0]
             if (first?.data.selection) select(first.data.selection)
+          }}
+          disableDrag={(data) => data.selection?.kind !== 'actuator' && data.selection?.kind !== 'sensor'}
+          disableDrop={({ parentNode, dragNodes }) => {
+            const compat = checkActuatorSensorDrop(document, dragNodes[0]?.data.selection, parentNode.data.selection)
+            return compat !== 'valid'
+          }}
+          onMove={({ dragNodes, parentNode }) => {
+            const dragSelection = dragNodes[0]?.data.selection
+            const targetSelection = parentNode?.data.selection
+            if (!dragSelection || !targetSelection) return
+            if (targetSelection.kind !== 'joint' && targetSelection.kind !== 'site') return
+            const targetType: 'joint' | 'site' = targetSelection.kind
+            const targetName =
+              targetType === 'joint'
+                ? findJoint(document.worldbody, targetSelection.id)?.name
+                : findSite(document.worldbody, targetSelection.id)?.name
+            if (!targetName) return
+
+            mutate((doc) => {
+              if (dragSelection.kind === 'actuator') {
+                setActuatorTarget(doc, dragSelection.id, { type: targetType, name: targetName })
+              } else if (dragSelection.kind === 'sensor') {
+                const newId = moveSensorToTarget(doc, dragSelection.id, {
+                  type: targetType,
+                  name: targetName,
+                })
+                if (newId && newId !== dragSelection.id) select({ kind: 'sensor', id: newId })
+              }
+            })
           }}
         >
           {TreeNodeRenderer}

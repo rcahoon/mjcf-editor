@@ -1,17 +1,13 @@
 import { useEditorStore } from '../../state/store'
-import { deleteActuator, setActuatorField, setActuatorTarget } from '../../state/actions/actuatorActions'
-import { collectAllJoints, collectAllSites } from '../../core/mjcf/queries'
-import type { ActuatorEntry, MjcfDocument } from '../../core/mjcf/types'
+import { deleteActuator, setActuatorField } from '../../state/actions/actuatorActions'
+import type { ActuatorEntry } from '../../core/mjcf/types'
 import { TextField } from './fields/TextField'
 import { NumberField } from './fields/NumberField'
 import { RangeField } from './fields/RangeField'
 
-export function ActuatorProperties({ actuator, doc }: { actuator: ActuatorEntry; doc: MjcfDocument }) {
+export function ActuatorProperties({ actuator }: { actuator: ActuatorEntry }) {
   const mutate = useEditorStore((s) => s.mutate)
   const select = useEditorStore((s) => s.select)
-  const joints = collectAllJoints(doc.worldbody).filter((j) => j.name)
-  const sites = collectAllSites(doc.worldbody).filter((s) => s.name)
-  const options = actuator.target.type === 'joint' ? joints.map((j) => j.name!) : sites.map((s) => s.name!)
 
   return (
     <div className="space-y-2">
@@ -21,36 +17,10 @@ export function ActuatorProperties({ actuator, doc }: { actuator: ActuatorEntry;
         value={actuator.name ?? ''}
         onCommit={(name) => mutate((d) => setActuatorField(d, actuator.id, { name }))}
       />
-      <label className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-neutral-400">Target type</span>
-        <select
-          className="w-32 rounded border border-neutral-700 bg-neutral-800 px-1 py-0.5 text-neutral-100"
-          value={actuator.target.type}
-          onChange={(e) =>
-            mutate((d) => setActuatorTarget(d, actuator.id, { type: e.target.value as 'joint' | 'site', name: '' }))
-          }
-        >
-          <option value="joint">joint</option>
-          <option value="site">site</option>
-        </select>
-      </label>
-      <label className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-neutral-400">Target</span>
-        <select
-          className="w-32 rounded border border-neutral-700 bg-neutral-800 px-1 py-0.5 text-neutral-100"
-          value={actuator.target.name}
-          onChange={(e) =>
-            mutate((d) => setActuatorTarget(d, actuator.id, { type: actuator.target.type, name: e.target.value }))
-          }
-        >
-          <option value="">(unset)</option>
-          {options.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <p className="text-xs text-neutral-400">
+        Target: <span className="text-neutral-200">{actuator.target.name || '(unset)'}</span> ({actuator.target.type})
+      </p>
+      <p className="text-[11px] text-neutral-500">Drag this row onto a different joint/site in the tree to retarget it.</p>
 
       {actuator.kind === 'motor' && (
         <NumberField label="Gear" value={actuator.gear ?? 1} onCommit={(gear) => mutate((d) => setActuatorField(d, actuator.id, { gear }))} />
