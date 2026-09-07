@@ -1,5 +1,6 @@
 import type { NodeId } from '../xml/xmlNode'
 import type { XmlElementNode } from '../xml/xmlNode'
+import type { DeviceMapEntry } from '../deviceMap/types'
 
 export type Vec3 = [number, number, number]
 /** MuJoCo quaternion convention: (w, x, y, z). */
@@ -173,7 +174,12 @@ export interface MjcfDocument {
   worldbody: BodyNode
   actuators: ActuatorEntry[]
   sensors: SensorEntry[]
-  /** Sections we don't model in depth (tendon/equality/contact/custom/...): kept verbatim. */
+  /** The <custom> section element — source of truth for deviceMap plus any
+   * non-device <text>/<numeric>/<tuple> children, which are left untouched. */
+  customSection: XmlElementNode
+  /** `dev.*`-prefixed <text> children of customSection, typed (see core/deviceMap). */
+  deviceMap: DeviceMapEntry[]
+  /** Sections we don't model in depth (tendon/equality/contact/keyframe/...): kept verbatim. */
   rawSections: XmlElementNode[]
   /** The <mujoco> root XmlNode — source of truth handed to serializeXmlDocument. */
   root: XmlElementNode

@@ -6,6 +6,7 @@ import { addGeom } from '../../state/actions/geomActions'
 import { addSite } from '../../state/actions/siteActions'
 import { addActuator } from '../../state/actions/actuatorActions'
 import { addSensor } from '../../state/actions/sensorActions'
+import { addDevice } from '../../state/actions/deviceMapActions'
 import type { ActuatorKind, SensorKind } from '../../core/mjcf/types'
 import { BodyProperties } from './BodyProperties'
 import { JointProperties } from './JointProperties'
@@ -13,6 +14,7 @@ import { GeomProperties } from './GeomProperties'
 import { SiteProperties } from './SiteProperties'
 import { ActuatorProperties } from './ActuatorProperties'
 import { SensorProperties } from './SensorProperties'
+import { DeviceMapEntryProperties } from './DeviceMapEntryProperties'
 import { AddWithKindPicker } from './fields/AddWithKindPicker'
 
 const ACTUATOR_KIND_OPTIONS: { value: ActuatorKind; label: string }[] = [
@@ -76,6 +78,7 @@ export function PropertyPanel() {
       {entity.kind === 'site' && <SiteProperties site={entity.node} />}
       {entity.kind === 'actuator' && <ActuatorProperties actuator={entity.node} />}
       {entity.kind === 'sensor' && <SensorProperties sensor={entity.node} />}
+      {entity.kind === 'device' && <DeviceMapEntryProperties device={entity.node} doc={document} />}
 
       {entity.kind === 'body' && (
         <div className="space-y-1 border-t border-neutral-800 pt-2">
@@ -121,6 +124,36 @@ export function PropertyPanel() {
         </div>
       )}
 
+      {entity.kind === 'body' && (
+        <div className="space-y-1 border-t border-neutral-800 pt-2">
+          <h4 className="text-xs font-semibold text-neutral-400">Add device to this body</h4>
+          {entity.node.name ? (
+            <div className="flex flex-wrap gap-1.5">
+              <AddButton
+                label="IMU device"
+                onClick={() =>
+                  mutate((d) => {
+                    const id = addDevice(d, 'PIGEON', { type: 'body', name: entity.node.name! })
+                    select({ kind: 'device', id })
+                  })
+                }
+              />
+              <AddButton
+                label="Pose device"
+                onClick={() =>
+                  mutate((d) => {
+                    const id = addDevice(d, 'SPECIAL', { type: 'body', name: entity.node.name! })
+                    select({ kind: 'device', id })
+                  })
+                }
+              />
+            </div>
+          ) : (
+            <p className="text-[11px] text-neutral-500">Name this body to attach devices to it.</p>
+          )}
+        </div>
+      )}
+
       {entity.kind === 'joint' && (
         <div className="space-y-2 border-t border-neutral-800 pt-2">
           <h4 className="text-xs font-semibold text-neutral-400">Add to this joint</h4>
@@ -146,9 +179,29 @@ export function PropertyPanel() {
                   })
                 }
               />
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <AddButton
+                  label="Motor device"
+                  onClick={() =>
+                    mutate((d) => {
+                      const id = addDevice(d, 'CTRE_MOTOR', { type: 'joint', name: entity.node.name! })
+                      select({ kind: 'device', id })
+                    })
+                  }
+                />
+                <AddButton
+                  label="Encoder device"
+                  onClick={() =>
+                    mutate((d) => {
+                      const id = addDevice(d, 'CAN_CODER', { type: 'joint', name: entity.node.name! })
+                      select({ kind: 'device', id })
+                    })
+                  }
+                />
+              </div>
             </>
           ) : (
-            <p className="text-[11px] text-neutral-500">Name this joint to attach actuators/sensors to it.</p>
+            <p className="text-[11px] text-neutral-500">Name this joint to attach actuators/sensors/devices to it.</p>
           )}
         </div>
       )}

@@ -4,7 +4,7 @@ import type { NodeId } from '../core/xml/xmlNode'
 import type { MechanismInstance } from '../core/mechanisms/types'
 import type { FileMap } from '../core/assets/resolveAssets'
 
-export type SelectionKind = 'body' | 'joint' | 'geom' | 'site' | 'actuator' | 'sensor'
+export type SelectionKind = 'body' | 'joint' | 'geom' | 'site' | 'actuator' | 'sensor' | 'device'
 
 export interface Selection {
   kind: SelectionKind
@@ -23,6 +23,9 @@ interface EditorState {
   gizmoMode: GizmoMode
   mechanismInstances: Record<string, MechanismInstance>
   assetFiles: FileMap
+  /** The robot's control period in seconds — an editor-only setting (not
+   * part of the MJCF file) used to compute valid `<option timestep>` choices. */
+  controlPeriod: number
   /** Bumped by every document mutation. The document graph has shared object
    * references between its typed (Layer 1) and raw-XML (Layer 0) views, so it
    * is mutated in place rather than replaced via immutable updates — this
@@ -40,6 +43,7 @@ interface EditorActions {
   setGizmoMode: (mode: GizmoMode) => void
   setMechanismInstance: (instance: MechanismInstance) => void
   removeMechanismInstanceRecord: (instanceId: string) => void
+  setControlPeriod: (seconds: number) => void
   /** Call after any direct mutation of `document` via core action functions. */
   touch: () => void
   /** Convenience wrapper: runs `fn` against the current document (if any) and
@@ -59,6 +63,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   gizmoMode: 'translate',
   mechanismInstances: {},
   assetFiles: new Map(),
+  controlPeriod: 0.005,
   revision: 0,
 
   loadDocument: (doc, name, assetFiles) =>
@@ -97,6 +102,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       delete next[instanceId]
       return { mechanismInstances: next }
     }),
+
+  setControlPeriod: (seconds) => set({ controlPeriod: seconds }),
 
   touch: () => set((s) => ({ revision: s.revision + 1 })),
 

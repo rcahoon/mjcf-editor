@@ -1,10 +1,12 @@
 /** A small hand-authored MJCF fixture (primitives only, no external mesh
  * files) used for tests and as the editor's default/demo document: a
  * two-link arm on a fixed base, with one motor and one position actuator,
- * and a jointpos + framepos sensor pair. */
+ * a jointpos + framepos sensor pair, a Team 766 device map (spec:
+ * mjcf_device_map_spec.md) binding CAN IDs to the joints/base, and a
+ * starting keyframe. */
 export const SIMPLE_ARM_MJCF = `<mujoco model="simple_arm">
   <compiler angle="degree" eulerseq="xyz"/>
-  <option gravity="0 0 -9.81"/>
+  <option timestep="0.0005" gravity="0 0 -9.81"/>
   <asset>
     <material name="metal" rgba="0.6 0.6 0.65 1"/>
     <material name="accent" rgba="0.85 0.25 0.15 1"/>
@@ -34,5 +36,15 @@ export const SIMPLE_ARM_MJCF = `<mujoco model="simple_arm">
     <jointpos name="shoulder_pos_sensor" joint="shoulder_joint"/>
     <framepos name="gripper_pos_sensor" objtype="site" objname="gripper_site"/>
   </sensor>
+  <custom>
+    <text name="dev.CTRE_MOTOR.9" data="joint=shoulder_joint gear=10 motor=KrakenX60"/>
+    <text name="dev.CAN_CODER.31" data="joint=shoulder_joint gear=1 ticksPerRevolution=360"/>
+    <text name="dev.SPARK_MAX.5" data="joint=elbow_joint gear=1 motor=NEO"/>
+    <text name="dev.PIGEON.1" data="body=base"/>
+    <text name="dev.SPECIAL.2" data="body=base kind=pose"/>
+  </custom>
+  <keyframe>
+    <key name="start" qpos="0 0"/>
+  </keyframe>
 </mujoco>
 `

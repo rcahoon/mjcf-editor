@@ -29,6 +29,14 @@ export const armTemplate: MechanismTemplate = {
       options: ['motor', 'position', 'velocity'],
     },
     { key: 'gearRatio', label: 'Gear ratio', type: 'number', default: 20, min: 1, max: 500, step: 1 },
+    {
+      key: 'motorIdSpace',
+      label: 'Motor ID space',
+      type: 'enum',
+      default: 'CTRE_MOTOR',
+      options: ['CTRE_MOTOR', 'SPARK_MAX', 'XRP_MOTOR'],
+    },
+    { key: 'motorCanId', label: 'Motor CAN ID', type: 'number', default: 0, min: 0, max: 62, step: 1 },
   ],
   build: (params) => {
     const length = Number(params.length)
@@ -39,6 +47,8 @@ export const armTemplate: MechanismTemplate = {
     const jointDamping = Number(params.jointDamping)
     const motorType = String(params.motorType) as 'motor' | 'position' | 'velocity'
     const gearRatio = Number(params.gearRatio)
+    const motorIdSpace = String(params.motorIdSpace)
+    const motorCanId = Number(params.motorCanId)
 
     const joint = elementNode('joint', {
       name: 'joint',
@@ -83,6 +93,11 @@ export const armTemplate: MechanismTemplate = {
     const actuator = elementNode(motorType, actuatorAttrs)
     const sensor = elementNode('jointpos', { name: 'joint_pos_sensor', joint: 'joint' })
 
-    return { bodies: [link], actuators: [actuator], sensors: [sensor], assets: [] }
+    const device = elementNode('text', {
+      name: `dev.${motorIdSpace}.${motorCanId}`,
+      data: `joint=joint gear=${formatFloats([gearRatio])} motor=KrakenX60`,
+    })
+
+    return { bodies: [link], actuators: [actuator], sensors: [sensor], assets: [], devices: [device] }
   },
 }

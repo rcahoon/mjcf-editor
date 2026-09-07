@@ -1,6 +1,7 @@
 import { useEditorStore } from '../state/store'
 import { findBody, findGeom, findJoint, findSite } from '../core/mjcf/queries'
 import type { ActuatorEntry, BodyNode, GeomNode, JointNode, SensorEntry, SiteNode } from '../core/mjcf/types'
+import type { DeviceMapEntry } from '../core/deviceMap/types'
 
 export type SelectedEntity =
   | { kind: 'body'; node: BodyNode }
@@ -9,6 +10,7 @@ export type SelectedEntity =
   | { kind: 'site'; node: SiteNode }
   | { kind: 'actuator'; node: ActuatorEntry }
   | { kind: 'sensor'; node: SensorEntry }
+  | { kind: 'device'; node: DeviceMapEntry }
 
 /** Resolves the current selection to its live typed node, re-evaluating
  * whenever the document is mutated (tracked via `revision`, since the
@@ -43,6 +45,10 @@ export function useSelectedEntity(): SelectedEntity | null {
     case 'sensor': {
       const node = document.sensors.find((s) => s.id === selection.id)
       return node ? { kind: 'sensor', node } : null
+    }
+    case 'device': {
+      const node = document.deviceMap.find((d) => d.id === selection.id)
+      return node ? { kind: 'device', node } : null
     }
   }
 }

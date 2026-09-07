@@ -1,19 +1,19 @@
 import clsx from 'clsx'
 import type { NodeRendererProps } from 'react-arborist'
 import { useEditorStore } from '../../state/store'
-import { checkActuatorSensorDrop, type TreeItem } from './treeData'
+import { checkTreeDrop, type TreeItem } from './treeData'
 
 export function TreeNodeRenderer({ node, tree, style, dragHandle }: NodeRendererProps<TreeItem>) {
   const document = useEditorStore((s) => s.document)
   const hasChildren = (node.data.children?.length ?? 0) > 0
 
-  // While an actuator/sensor is being dragged, every joint/site row shows
-  // whether it's a valid drop target — not just the one currently hovered —
-  // so compatible vs. incompatible targets are visible the moment the drag
-  // starts (per the requested "reject with visual feedback" UX).
+  // While an actuator/sensor/device is being dragged, every joint/site/body
+  // row shows whether it's a valid drop target — not just the one currently
+  // hovered — so compatible vs. incompatible targets are visible the moment
+  // the drag starts (per the requested "reject with visual feedback" UX).
   const dragNode = tree.dragNode
   const dropState =
-    dragNode && document ? checkActuatorSensorDrop(document, dragNode.data.selection, node.data.selection) : 'irrelevant'
+    dragNode && document ? checkTreeDrop(document, dragNode.data.selection, node.data.selection) : 'irrelevant'
 
   const rowClass =
     dropState === 'valid'

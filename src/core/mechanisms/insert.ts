@@ -43,6 +43,11 @@ export function insertMechanismInstance(
     assetSection.children.push(...expanded.assets.map((a) => a.xml))
   }
 
+  if (expanded.devices.length > 0) {
+    doc.deviceMap.push(...expanded.devices)
+    doc.customSection.children.push(...expanded.devices.map((d) => d.xml))
+  }
+
   for (const b of expanded.bodies) b.mechanismInstanceId = namespace
 
   const instance: MechanismInstance = {
@@ -52,6 +57,7 @@ export function insertMechanismInstance(
     paramOverrides: params,
     attachPointBodyId,
     rootBodyIds: expanded.bodies.map((b) => b.id),
+    deviceIds: expanded.devices.map((d) => d.id),
     linked: true,
   }
   return { instance }
@@ -94,5 +100,14 @@ export function removeMechanismInstance(doc: MjcfDocument, instance: MechanismIn
         (c) => !(c.kind === 'element' && c.attrs.name?.startsWith(`${instance.instanceName}_`)),
       )
     }
+  }
+
+  const deviceIds = new Set(instance.deviceIds)
+  if (deviceIds.size > 0) {
+    const removedXmlIds = new Set(
+      doc.deviceMap.filter((d) => deviceIds.has(d.id)).map((d) => d.xml.id),
+    )
+    doc.deviceMap = doc.deviceMap.filter((d) => !deviceIds.has(d.id))
+    doc.customSection.children = doc.customSection.children.filter((c) => !removedXmlIds.has(c.id))
   }
 }

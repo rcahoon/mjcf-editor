@@ -10,6 +10,7 @@ import {
 import { getAttr, parseFloatsAttr, parseVec3Attr } from './attrUtils'
 import { MJCF_DEFAULTS } from './defaults'
 import { IDENTITY_ROTATION } from './types'
+import { parseDeviceMapEntry } from '../deviceMap/parse'
 import type {
   ActuatorEntry,
   ActuatorKind,
@@ -271,8 +272,21 @@ export function parseMjcfDocument(root: XmlElementNode): MjcfDocument {
   const actuators = actuatorXml ? findChildrenElements(actuatorXml).map(parseActuator) : []
   const sensorXml = findChild(root, 'sensor')
   const sensors = sensorXml ? findChildrenElements(sensorXml).map(parseSensor) : []
+  const customSection = getOrCreateChild(root, 'custom')
+  const deviceMap = findChildrenElements(customSection)
+    .filter((c) => c.tag === 'text' && (getAttr(c, 'name') ?? '').startsWith('dev.'))
+    .map(parseDeviceMapEntry)
 
-  const consumedTags = new Set(['compiler', 'option', 'default', 'asset', 'worldbody', 'actuator', 'sensor'])
+  const consumedTags = new Set([
+    'compiler',
+    'option',
+    'default',
+    'asset',
+    'worldbody',
+    'actuator',
+    'sensor',
+    'custom',
+  ])
   const rawSections = root.children.filter(
     (c): c is XmlElementNode => isElement(c) && !consumedTags.has(c.tag),
   )
@@ -282,6 +296,8 @@ export function parseMjcfDocument(root: XmlElementNode): MjcfDocument {
     compiler,
     option,
     defaults,
+    customSection,
+    deviceMap,
     assets,
     worldbody,
     actuators,

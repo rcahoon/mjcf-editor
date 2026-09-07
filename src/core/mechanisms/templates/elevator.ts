@@ -30,6 +30,14 @@ export const elevatorTemplate: MechanismTemplate = {
     },
     { key: 'gearRatio', label: 'Gear ratio', type: 'number', default: 15, min: 1, max: 500, step: 1 },
     { key: 'drumRadius', label: 'Drum radius (m)', type: 'number', default: 0.025, min: 0.005, max: 0.15, step: 0.005 },
+    {
+      key: 'motorIdSpace',
+      label: 'Motor ID space',
+      type: 'enum',
+      default: 'CTRE_MOTOR',
+      options: ['CTRE_MOTOR', 'SPARK_MAX', 'XRP_MOTOR'],
+    },
+    { key: 'motorCanId', label: 'Motor CAN ID', type: 'number', default: 0, min: 0, max: 62, step: 1 },
   ],
   build: (params) => {
     const stageCount = Math.max(1, Math.round(Number(params.stageCount)))
@@ -39,6 +47,8 @@ export const elevatorTemplate: MechanismTemplate = {
     const motorType = String(params.motorType) as 'motor' | 'position' | 'velocity'
     const gearRatio = Number(params.gearRatio)
     const drumRadius = Number(params.drumRadius)
+    const motorIdSpace = String(params.motorIdSpace)
+    const motorCanId = Number(params.motorCanId)
 
     function buildStage(stageIndex: number): XmlElementNode {
       const isLast = stageIndex === stageCount
@@ -89,6 +99,11 @@ export const elevatorTemplate: MechanismTemplate = {
     const actuator = elementNode(motorType, actuatorAttrs)
     const sensor = elementNode('jointpos', { name: 'lift_pos_sensor', joint: 'stage_1_joint' })
 
-    return { bodies: [firstStage], actuators: [actuator], sensors: [sensor], assets: [] }
+    const device = elementNode('text', {
+      name: `dev.${motorIdSpace}.${motorCanId}`,
+      data: `joint=stage_1_joint gear=${formatFloats([gearRatio])} motor=KrakenX60`,
+    })
+
+    return { bodies: [firstStage], actuators: [actuator], sensors: [sensor], assets: [], devices: [device] }
   },
 }

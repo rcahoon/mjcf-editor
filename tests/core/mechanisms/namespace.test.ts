@@ -28,9 +28,10 @@ describe('mechanism instance namespacing', () => {
       jointDamping: 0.3,
       motorType: 'position',
       gearRatio: 20,
+      motorIdSpace: 'CTRE_MOTOR',
     }
-    const left = expandInstance(armTemplate, params, 'left_arm')
-    const right = expandInstance(armTemplate, params, 'right_arm')
+    const left = expandInstance(armTemplate, { ...params, motorCanId: 10 }, 'left_arm')
+    const right = expandInstance(armTemplate, { ...params, motorCanId: 11 }, 'right_arm')
 
     const root = fakeRoot([...left.bodies, ...right.bodies])
     const jointNames = collectAllJoints(root).map((j) => j.name)
@@ -51,5 +52,15 @@ describe('mechanism instance namespacing', () => {
     // Site names are also namespaced.
     expect(left.bodies[0].sites[0].name).toBe('left_arm_tip')
     expect(right.bodies[0].sites[0].name).toBe('right_arm_tip')
+
+    // Each instance's device gets a distinct CAN ID (a user-supplied param,
+    // not namespace-derived) but its data string's joint= reference is
+    // namespaced the same way as everything else in the fragment.
+    expect(left.devices).toHaveLength(1)
+    expect(right.devices).toHaveLength(1)
+    expect(left.devices[0].deviceId).toBe(10)
+    expect(right.devices[0].deviceId).toBe(11)
+    expect(left.devices[0].joint).toBe('left_arm_joint')
+    expect(right.devices[0].joint).toBe('right_arm_joint')
   })
 })

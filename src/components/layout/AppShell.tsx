@@ -8,6 +8,7 @@ import { SAMPLE_FIXTURES } from '../../core/mjcf/sampleFixtures'
 import { Toolbar } from './Toolbar'
 import { HierarchyTree } from '../tree/HierarchyTree'
 import { MechanismPalette } from '../mechanisms/MechanismPalette'
+import { ModelSettingsPanel } from '../settings/ModelSettingsPanel'
 import { Viewport } from '../viewport/Viewport'
 import { PropertyPanel } from '../properties/PropertyPanel'
 import { ValidationPanel } from '../importExport/ValidationPanel'
@@ -30,7 +31,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
 export function AppShell() {
   const document = useEditorStore((s) => s.document)
   const loadDocument = useEditorStore((s) => s.loadDocument)
-  const [leftTab, setLeftTab] = useState<'tree' | 'palette'>('tree')
+  const [leftTab, setLeftTab] = useState<'tree' | 'palette' | 'settings'>('tree')
 
   useEffect(() => {
     registerBuiltinMechanisms()
@@ -53,9 +54,14 @@ export function AppShell() {
                 <TabButton active={leftTab === 'palette'} onClick={() => setLeftTab('palette')}>
                   Palette
                 </TabButton>
+                <TabButton active={leftTab === 'settings'} onClick={() => setLeftTab('settings')}>
+                  Settings
+                </TabButton>
               </div>
-              <div className="flex-1 overflow-hidden">
-                {leftTab === 'tree' ? <HierarchyTree /> : <MechanismPalette />}
+              <div className="flex-1 overflow-y-auto">
+                {leftTab === 'tree' && <HierarchyTree />}
+                {leftTab === 'palette' && <MechanismPalette />}
+                {leftTab === 'settings' && <ModelSettingsPanel />}
               </div>
             </div>
           </Panel>

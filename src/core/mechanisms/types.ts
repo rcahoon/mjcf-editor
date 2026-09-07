@@ -1,5 +1,6 @@
 import type { XmlElementNode } from '../xml/xmlNode'
 import type { ActuatorEntry, AssetEntry, BodyNode, SensorEntry } from '../mjcf/types'
+import type { DeviceMapEntry } from '../deviceMap/types'
 
 export type MechanismParamType = 'number' | 'vec3' | 'range' | 'enum' | 'boolean'
 
@@ -23,6 +24,8 @@ export interface RawMechanismFragment {
   actuators: XmlElementNode[]
   sensors: XmlElementNode[]
   assets: XmlElementNode[]
+  /** `<text name="dev...">` device map entries (see core/deviceMap). */
+  devices: XmlElementNode[]
 }
 
 export interface MechanismTemplate {
@@ -42,6 +45,7 @@ export interface ExpandedMechanismFragment {
   actuators: ActuatorEntry[]
   sensors: SensorEntry[]
   assets: AssetEntry[]
+  devices: DeviceMapEntry[]
 }
 
 export interface MechanismInstance {
@@ -52,5 +56,10 @@ export interface MechanismInstance {
   attachPointBodyId: string
   /** Root body id(s) of this instance's materialized subtree, for lookup/replacement. */
   rootBodyIds: string[]
+  /** Device map entry ids this instance created — tracked explicitly (unlike
+   * actuators/sensors, which are found by namespace-prefixed name) because a
+   * device's own `dev.<idSpace>.<id>` identity is deliberately not
+   * namespace-prefixed (see core/mechanisms/namespace.ts). */
+  deviceIds: string[]
   linked: boolean
 }

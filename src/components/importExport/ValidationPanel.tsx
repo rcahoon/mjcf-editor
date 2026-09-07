@@ -5,9 +5,13 @@ import { validateMjcfDocument } from '../../core/mjcf/validate'
 export function ValidationPanel() {
   const document = useEditorStore((s) => s.document)
   const revision = useEditorStore((s) => s.revision)
+  const controlPeriod = useEditorStore((s) => s.controlPeriod)
   const select = useEditorStore((s) => s.select)
 
-  const issues = useMemo(() => (document ? validateMjcfDocument(document) : []), [document, revision])
+  const issues = useMemo(
+    () => (document ? validateMjcfDocument(document, { controlPeriod }) : []),
+    [document, revision, controlPeriod],
+  )
 
   if (!document || issues.length === 0) return null
 
@@ -20,9 +24,8 @@ export function ValidationPanel() {
             key={i}
             className={issue.severity === 'error' ? 'text-red-400' : 'text-amber-400'}
             onClick={() => {
-              if (!issue.nodeId) return
-              const isActuator = document.actuators.some((a) => a.id === issue.nodeId)
-              select({ kind: isActuator ? 'actuator' : 'sensor', id: issue.nodeId })
+              if (!issue.nodeId || !issue.nodeKind) return
+              select({ kind: issue.nodeKind, id: issue.nodeId })
             }}
           >
             {issue.severity === 'error' ? '✕' : '⚠'} {issue.message}
